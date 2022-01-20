@@ -1,0 +1,185 @@
+
+## *Sheetal Mukeshkumar Jain* **s4643507**
+***
+
+# Assignment 2
+***
+```{r}
+library(readr)
+thanksgiving_meals <-read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-11-20/thanksgiving_meals.csv")
+```
+
+### part 2
+### **1. Display the first 10 rows of the dataset using `kable()` function (1 marks)**
+
+```{r}
+library(knitr)
+knitr::kable(thanksgiving_meals[1:10,], "html")
+```
+
+kable function displays the the observation from data frame we are working on. format, label, column name are left blank as it takes the data from table itself.
+
+
+### **2. Using `skim()` display the summary of variables. Think about the task to predict a family income based on their menu: what variables may be useful? Are all of them correct type?  Write 2-3 sentences with your explanation. (2 marks). Think about the task to predict a community type or US_region based on their menu: what variables may be useful? Are all of them correct type? (2 marks)**
+```{r}
+library(skimr)
+skim(thanksgiving_meals)
+```
+Skim function give summary of all the observation present in dataset. number of observation, missing observation,completion rate, minimum and maximum of a variable.
+Family income can be predicted using the menu of dinner order by customer. The variable included in the model should be main dish served, stuffing, gravy, cranberry, pie, dessert, travel, age gender, and US region. All variables are factor variable or categorical variable.
+
+Us region type or community type can be predicted using variable main dish, side order, pie, dessert, gravy, and cranberry. As region of belonging have the highest impact on the food ordering behavior. All variables are character and categorical one.
+
+### **3. Use `fct_reorder` and `parse_number` functions to create a factor variable `family_income`(2 mark).**
+```{r}
+thanksgiving_meals$familyincome1 <- ifelse(thanksgiving_meals$family_income=="Prefer not to answer", "", parse_number(thanksgiving_meals$family_income))
+table(thanksgiving_meals$familyincome1)
+thanksgiving_meals$familyincome <- parse_number(thanksgiving_meals$familyincome1)
+```
+
+
+### **4. What is the number of people who celebrate? (1 mark)**
+The sum function will add the number of observation where family celebrate thanks giving. We are using inline command of r markdown package to calculate the number. syntex is "r sum(thanksgiving_meals$celebrate == "Yes")" with `  quotes in starting and ending inplace of double quote. The number of people who celebrate is `r sum(thanksgiving_meals$celebrate == "Yes")`.
+
+
+### **5. What are categories and insights for each main dish served and the method it is prepared? (2 marks)**
+The main dish served using various method of preparation are following:
+```{r}
+table(thanksgiving_meals$main_dish)
+crosstable <- table(thanksgiving_meals$main_dish, thanksgiving_meals$main_prep)
+crosstable
+```
+The chicken is ordered 12 number of times out of which it is baked 4 times, Fried 2 times, Roasted 4 times, and prepared using other  method 2 times.similarly other variables observation is presented in above table.
+
+
+### **6. Create 3 different data viz showing insights for main dish served and the method. Provide your own legend and use themes. Write 2-3 sentences with your explanation of each insight. (4 marks)**
+```{r}
+library(ggplot2)
+q <- ggplot(thanksgiving_meals, aes(x=reorder(thanksgiving_meals$main_dish, thanksgiving_meals$main_dish, function(x)-length(x)))) + geom_bar(fill='red') +  labs(x='Main DIsh Served')
+q + theme(axis.text.x = element_text(angle = 90))
+```
+
+The bar plot shows the turkey is the highest order dish in thanksgiving dinner.
+
+```{r}
+counts <- table(thanksgiving_meals$main_dish, thanksgiving_meals$main_prep)
+r <- mosaicplot(counts, xlab='Method of Preparation', ylab='Main Dish Served',main='Main Dish Served', col='orange',las = 1, dir = c("h", "v"),off = 30)
+ 
+```
+
+From Mosaic plot, we can conclue that Roasted Turkey, and Baked Turkey is the highest order main dish in thanks giving dinner.
+
+```{r}
+library(ggplot2)
+q1 <- ggplot(thanksgiving_meals, aes(x=factor(thanksgiving_meals$main_dish), y=thanksgiving_meals$main_prep, fill=thanksgiving_meals$main_prep)) + geom_bar(stat="identity")
+q1+ theme(axis.text.x = element_text(angle = 90), axis.text.y = element_blank())
+```
+
+### **7. How many use cranberry sauce? How many use gravy? 2marks**
+```{r}
+table(thanksgiving_meals$cranberry)
+```
+The number of people who use Canned cranberry sauce is 502.
+the number of homemade cranberry sauce user is 301 while other type of sauce user are 25. total
+user of cranberry sauce is `r (502+301+25)`.
+
+```{r}
+table(thanksgiving_meals$gravy)
+```
+The number of gravy user is 892.
+
+### **8-9. What is the distribution of those who celebrate across income ranges. Create a data viz. Write 2-3 sentences with your explanation of each insight. (4 marks)**
+```{r}
+xx <- table(thanksgiving_meals$family_income, thanksgiving_meals$celebrate)
+xx
+```
+The above table shows the number of person who celebrate in each income category. in $0 to $9999 income category 14 family not celebrated while 52 family celebrate thanksgiving. similarly we canc onclude for all the income category.
+
+```{r}
+library(ggplot2)
+p <- ggplot(thanksgiving_meals, aes(x=factor(thanksgiving_meals$family_income), y=thanksgiving_meals$celebrate, fill=thanksgiving_meals$celebrate)) + geom_bar(stat="identity")
+p+ theme(axis.text.x = element_text(angle = 90), axis.text.y = element_blank())
+```
+The above graph shows the number or count of family who celebrated the thanksgiving in each income category.As the income of the family increases number of family celebrating thanks giving increases.
+
+### **10. Use the following code to create a new data set 2 mark. Write 2-3 sentences with your explanation of what it does. (4 marks)**
+```{r}
+library(dplyr)
+library(tidyr)
+library(stringr)
+newdata <- thanksgiving_meals %>% select(id, starts_with("side"), starts_with("pie"), starts_with("dessert")) %>% select(-side15, -pie13, -dessert12) %>% gather(type, value, -id) %>% filter(!is.na(value), !value %in% c("None", "Other (please specify)")) %>% mutate(type = str_remove(type, "\\d+"))
+
+table(newdata$value)
+table(newdata$type)
+
+```
+Our dataset name is newdata
+Select function select all the observation which have column name start with side, pie, and desert.
+select(-side15, -pie13, -dessert12) command drops the column with column name as side15, pie13 and desset12.
+gather will create a 3 variable (column) data set with 39146 observation, variable in this dataset will be id, type, and value.
+filter command will erase all the data with "NA", "None", "Other (please specify) as observation. we are left with 8145 observations.
+mutate drop the numeric part of dessert, pie and side from type variable.
+
+
+### **11-12. Intall package `widyr` and use `pairwise_cor()` function https://www.rdocumentation.org/packages/widyr/versions/0.1.3/topics/pairwise_cor**
+```{r}
+library(widyr)
+```
+
+### Write 2-3 sentences with your explanation of what it does. (2 marks) 
+In particular, we compute the phi coefficient. The phi coefficient is related to the chi-squared statistic for a 2 × 2 contingency table. It states correlation among words, which indicates how often they appear together relative to how often they appear separately.
+
+### Find correlations of pairs of items in a column, based on a "feature" column that links them together. Use this code for the new dataset
+
+```{r}
+pairwise_cor(newdata, value, id, sort = TRUE)
+```
+### Write 1 sentence with your explanation of what insights it shows. (2 marks) 
+Cookies and Brownies have pair wise correlation of 0.41. Higher is the correlation value higher is chance of appearing the two strings together.
+
+### **13. Use `lm()` or randomForest() function to build a model that predict a family income based on data in the dataset. **
+```{r}
+library(dplyr)
+library(tidypredict)
+modellm <- lm(formula= thanksgiving_meals$familyincome ~ factor(thanksgiving_meals$age) 
+           + factor(thanksgiving_meals$celebrate), data=thanksgiving_meals)
+summary(modellm)
+prediction <- predict(modellm, thanksgiving_meals)
+summary(prediction)
+```
+Model is build using two variable age and celebrate. prediction table is created to estimate the value of family income based on the model.
+
+### ** 8 marks Compare 3 models using different set of input variables. Use different number of variables. Explain your choice of variables (3 sentences)**
+```{r}
+reg1 <- lm(formula= thanksgiving_meals$familyincome ~ factor(thanksgiving_meals$age) 
+           + factor(thanksgiving_meals$gender) 
+           +factor(thanksgiving_meals$us_region)
+           +factor(thanksgiving_meals$main_dish)
+           , data=thanksgiving_meals)
+summary(reg1)
+
+reg2 <- lm(formula= thanksgiving_meals$familyincome ~ factor(thanksgiving_meals$age) 
+           + factor(thanksgiving_meals$celebrate)
+           + factor(thanksgiving_meals$gender) , data=thanksgiving_meals)
+summary(reg2)
+
+
+reg3 <- lm(formula= thanksgiving_meals$familyincome ~ factor(thanksgiving_meals$age) 
+           + factor(thanksgiving_meals$celebrate), data=thanksgiving_meals)
+summary(reg3)
+```
+
+
+I have selected age, gender, celebrate, maindish and us_region as  explanatory variable in our regression  model.
+
+In regression 1 model, us region and main dish variable are dropped as when dropping this, adjusted r square value increases, and maximum factor variable in us_region, and main dish category are insignificant (p value is greater than 0.1). in regression model 3, gender variable is dropped as it is insignificant in our model number 2.
+
+
+### ** Write 2 sentences explaining which model os best.**
+Higher age person is more likely to get higher income. If a person has higher income, then his or her willingness to celebrate thanksgiving increases. our regression model 3 is best model, and we have used regression model 3 to predict the family income in our data set thanks giving.
+
+
+
+
+
+
